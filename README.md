@@ -17,3 +17,4 @@
 * Run the exe generated in ${ROOT}/build/Debug. The calibration won't start until you press 'c'.
 * Every time the key 'c' is pressed, it captures one image and waits for the next one. The number of images to capture before calibration runs is currently set at 10.
 * After capturing 10 images, a camera_parameters.yml file will be generated and the application will exit.
+* Press 'q' anytime when the application is running to quit application.
