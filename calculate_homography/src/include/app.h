@@ -42,22 +42,11 @@ private :
 	int colorWidth;
 	int colorHeight;
 	unsigned int colorBytesPerPixel;
-
 	cv::Mat colorMat;
 
-	// OpenCV Chessboard parameters. Change these values if you use a different 
-	int numOfCornersHorizontal; // It is 9 by default
-	int numOfCornersVertical; // It is 6 by default
-	int numOfBoardImages;
-	Size boardSize;
-	float squareSize; // Actual length of one square edge in the chessboard pattern. In this example it is 2.6cm
-	int numOfCalibrationLoop; // It is 30 by default;
-	vector< vector< Point3f > > cornerPointsInrealWorld;
-	vector< vector< Point2f > > cornerPointsOnImage;
-	std::clock_t startClockTick;
-	double timeDelayBeforeCalibration; // Default : 2 secs
-	int numOfSuccessfulCornerDetections;
-	int maxNumOfSuccessfulCornerDetections; // Default : 10 images
+	// Variables to compute homography
+	Point2f topLeft, topRight, bottomLeft, bottomRight;
+	Point2f topLeftImage, topRightImage, bottomLeftImage, bottomRightImage;
 
 public:
 	// Constructor
@@ -67,25 +56,29 @@ public:
 	~Capture();
 	void run();
 
+	// Calibration functions
+	void calcHomographyMatrix(vector<Point2f> pts_src, vector<Point2f> pts_dest);
+	void setRangePoints(int topLeftX, int topLeftY, int topRightX, int topRightY, int bottomLeftX, int bottomLeftY, int bottomRightX, int bottomRightY);
+
 private :
 	void initialize();
 	void finalize();
 
+	// Sensor initializations
 	inline void initializeSensor();
 	inline void initializeColorImage();
+
+	// Drawing functions
 	void update();
 	inline void updateColor();
-	inline void captureSampleImages(Mat image);
-	inline void calibrate();
 	void draw();
 	inline void drawColor();
 	void show();
 	inline void showColor();
 
+	// Input functions
 	static void mouseCallback(int event, int x, int y, int flags, void* userdata);
 	inline void doMouseCallback(int event, int x, int y, int flags);
-
-	void setupCalibration();
 };
 
 #endif // __APP__

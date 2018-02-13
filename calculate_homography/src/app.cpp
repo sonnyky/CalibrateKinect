@@ -29,13 +29,10 @@ Capture::~Capture()
 void Capture::initialize() {
 	
 	cvNamedWindow("Color", CV_WINDOW_NORMAL);
-	cvNamedWindow("Detected", CV_WINDOW_NORMAL);
 
 	initializeSensor();
 	initializeColorImage();
 	cv::setMouseCallback("Color", mouseCallback, this);
-
-	setupCalibration();
 	
 }
 
@@ -49,18 +46,13 @@ void Capture::run()
 		update();
 		draw();
 		show();
-		if(waitKey(1) == 113) break;
-
 		if (waitKey(1) == 99) {
-			// Calibrate next image sample
-			captureSampleImages(colorMat);
-		}
+			vector<Point2f> pts_src, pts_dest;
+			pts_src.push_back(topLeft); pts_src.push_back(topRight); pts_src.push_back(bottomLeft); pts_src.push_back(bottomRight);
+			pts_dest.push_back(topLeftImage); pts_dest.push_back(topRightImage); pts_dest.push_back(bottomLeftImage); pts_dest.push_back(bottomRightImage);
+			calcHomographyMatrix(pts_src, pts_dest);
+		}else if(waitKey(1) == 113) break;
 
-		if (numOfSuccessfulCornerDetections >= maxNumOfSuccessfulCornerDetections) break;
-	}
-
-	if (cornerPointsInrealWorld.size() == cornerPointsOnImage.size() && cornerPointsOnImage.size() > 0) {
-		calibrate();
 	}
 }
 
@@ -120,47 +112,6 @@ inline void Capture::updateColor()
 	ERROR_CHECK(colorFrame->CopyConvertedFrameDataToArray(static_cast<UINT>(colorBuffer.size()), &colorBuffer[0], ColorImageFormat::ColorImageFormat_Bgra));
 }
 
-inline void Capture::captureSampleImages(Mat image) {
-
-	if ((clock() - startClockTick) / (double)CLOCKS_PER_SEC < timeDelayBeforeCalibration) {
-		return;
-	}
-	printf("Capturing sample images\n");
-	// Convert to Grayscale
-	
-	vector<Point2f> pointBuf;
-	int chessBoardFlags = CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE;
-	Mat gray;
-	cv::cvtColor(image, gray, CV_BGR2GRAY);
-	imshow("Detected", gray);
-	vector< Point2f > corners;
-	bool found = false;
-	
-	found = findChessboardCorners(image, boardSize, corners, chessBoardFlags);
-	
-	if (found)
-	{
-		cornerSubPix(gray, corners, cv::Size(5, 5), cv::Size(-1, -1),
-			TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 30, 0.1));
-		drawChessboardCorners(gray, boardSize, corners, found);
-		imshow("Detected", gray);
-	}
-	else {
-		return;
-	}
-	
-	vector< Point3f > obj;
-	for (int i = 0; i < numOfCornersVertical; i++)
-		for (int j = 0; j < numOfCornersHorizontal; j++)
-			obj.push_back(Point3f((float)j * squareSize, (float)i * squareSize, 0));
-
-	if (found) {
-		cornerPointsOnImage.push_back(corners);
-		cornerPointsInrealWorld.push_back(obj);
-		numOfSuccessfulCornerDetections++;
-	}
-	
-}
 
 // Draw Data
 void Capture::draw()
@@ -201,7 +152,7 @@ inline void Capture::showColor()
 
 
 void Capture::mouseCallback(int event, int x, int y, int flags, void* userdata) {
-	if (event == cv::EVENT_LBUTTONDOWN)
+	if (event == cv::EVENT_LBUTTONDOWN || event == cv::EVENT_FLAG_RBUTTON)
 	{
 		Capture* self = static_cast<Capture*>(userdata);
 		self->doMouseCallback(event, x, y, flags);
@@ -211,48 +162,57 @@ void Capture::mouseCallback(int event, int x, int y, int flags, void* userdata) 
 void Capture::doMouseCallback(int event, int x, int y, int flags) {
 	if (flags == (cv::EVENT_FLAG_LBUTTON))
 	{
-		std::cout << "Left mouse clicked" << std::endl;
+		std::cout << "Left mouse clicked, registering point as top left point" << std::endl;
+		topLeftImage.x = x;
+		topLeftImage.y = y;
 	}
 
 	if (flags == (cv::EVENT_FLAG_LBUTTON + cv::EVENT_FLAG_SHIFTKEY))
 	{
-		
-		std::cout << "Shift+Left click" << std::endl;
+		std::cout << "Shift+Left clicked, registering point as top right point" << std::endl;
+		topRightImage.x = x;
+		topRightImage.y = y;
+	}
+
+	if (flags == (cv::EVENT_FLAG_RBUTTON))
+	{
+		std::cout << "Right mouse clicked, registering point as bottom left point" << std::endl;
+		bottomLeftImage.x = x;
+		bottomLeftImage.y = y;
+	}
+
+	if (flags == (cv::EVENT_FLAG_RBUTTON + cv::EVENT_FLAG_SHIFTKEY))
+	{
+
+		std::cout << "Shift+Right clicked, registering point as bottom right point" << std::endl;
+		bottomRightImage.x = x;
+		bottomRightImage.y = y;
 	}
 
 }
 
-void Capture::setupCalibration() {
-	numOfCornersHorizontal = 9;
-	numOfCornersVertical = 6;
-	numOfCalibrationLoop = 30;
-	squareSize = 2.6;
-	maxNumOfSuccessfulCornerDetections = 10;
-	numOfSuccessfulCornerDetections = 0;
-	boardSize = Size(numOfCornersHorizontal, numOfCornersVertical);
-	int board_n = numOfCornersHorizontal * numOfCornersVertical;
-	timeDelayBeforeCalibration = 2;
-	startClockTick = clock();
+void Capture::setRangePoints(int topLeftX, int topLeftY, int topRightX, int topRightY, int bottomLeftX, int bottomLeftY, int bottomRightX, int bottomRightY) {
+	topLeft.x = topLeftX;
+	topLeft.y = topLeftY;
+	topRight.x = topRightX;
+	topRight.y = topRightY;
+	bottomLeft.x = bottomLeftX;
+	bottomLeft.y = bottomLeftY;
+	bottomRight.x = bottomRightX;
+	bottomRight.y = bottomRightY;
+	printf("Top left x : %f\n", topLeft.x);
+	printf("Top left y : %f\n", topLeft.y);
+	printf("Top right x : %f\n", topRight.x);
+	printf("Top right y : %f\n", topRight.y);
+	printf("Bottom left x : %f\n", bottomLeft.x);
+	printf("Bottom left y : %f\n", bottomLeft.y);
+	printf("Bottom right x : %f\n", bottomRight.x);
+	printf("Bottom right y : %f\n", bottomRight.y);
 }
 
-void Capture::calibrate() {
-	Mat K = Mat(3, 3, CV_32FC1);;
-	Mat D;
-	vector< Mat > rvecs, tvecs;
-	int flag = 0;
-	K.ptr<float>(0)[0] = 1; 
-	K.ptr<float>(1)[1] = 1; 
-	flag |= CV_CALIB_FIX_K4;
-	flag |= CV_CALIB_FIX_K5;
-	printf("Calibrating ...");
-	calibrateCamera(cornerPointsInrealWorld, cornerPointsOnImage, colorMat.size(), K, D, rvecs, tvecs, flag);
-	
-	FileStorage fs("camera_parameters.yml", FileStorage::WRITE);
-	fs << "K" << K;
-	fs << "D" << D;
-	fs << "board_width" << numOfCornersHorizontal;
-	fs << "board_height" << numOfCornersVertical;
-	fs << "square_size" << squareSize;
-	printf("Done Calibration\n");
-	
+void Capture::calcHomographyMatrix(vector<Point2f> pts_src, vector<Point2f> pts_dest) {
+	printf("Calculating homography...\n Please redo clicking if the results are not as expected.\n Matrix will be output as text file.");
+	Mat h = findHomography(pts_src, pts_dest);
+	FileStorage file("homography.xml", 1, "UTF-8");
+	file <<"Homography" << h;
 }
