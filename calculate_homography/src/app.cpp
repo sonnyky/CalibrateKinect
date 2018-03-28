@@ -152,7 +152,7 @@ inline void Capture::showColor()
 
 
 void Capture::mouseCallback(int event, int x, int y, int flags, void* userdata) {
-	if (event == cv::EVENT_LBUTTONDOWN || event == cv::EVENT_FLAG_RBUTTON)
+	if (event == cv::EVENT_LBUTTONDOWN || event == cv::EVENT_RBUTTONDOWN)
 	{
 		Capture* self = static_cast<Capture*>(userdata);
 		self->doMouseCallback(event, x, y, flags);
