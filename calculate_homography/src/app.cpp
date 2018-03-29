@@ -48,8 +48,8 @@ void Capture::run()
 		show();
 		if (waitKey(1) == 99) {
 			vector<Point2f> pts_src, pts_dest;
-			pts_src.push_back(topLeft); pts_src.push_back(topRight); pts_src.push_back(bottomLeft); pts_src.push_back(bottomRight);
-			pts_dest.push_back(topLeftImage); pts_dest.push_back(topRightImage); pts_dest.push_back(bottomLeftImage); pts_dest.push_back(bottomRightImage);
+			pts_src.push_back(topLeftImage); pts_src.push_back(topRightImage); pts_src.push_back(bottomRightImage); pts_src.push_back(bottomLeftImage);
+			pts_dest.push_back(topLeft); pts_dest.push_back(topRight); pts_dest.push_back(bottomRight); pts_dest.push_back(bottomLeft);
 			calcHomographyMatrix(pts_src, pts_dest);
 		}else if(waitKey(1) == 113) break;
 
@@ -162,21 +162,21 @@ void Capture::mouseCallback(int event, int x, int y, int flags, void* userdata) 
 void Capture::doMouseCallback(int event, int x, int y, int flags) {
 	if (flags == (cv::EVENT_FLAG_LBUTTON))
 	{
-		std::cout << "Left mouse clicked, registering point as top left point" << std::endl;
+		std::cout << "Left mouse clicked at : " << x << ", " << y << std::endl;
 		topLeftImage.x = x;
 		topLeftImage.y = y;
 	}
 
 	if (flags == (cv::EVENT_FLAG_LBUTTON + cv::EVENT_FLAG_SHIFTKEY))
 	{
-		std::cout << "Shift+Left clicked, registering point as top right point" << std::endl;
+		std::cout << "Shift+Left clicked at : " << x << ", " << y << std::endl;
 		topRightImage.x = x;
 		topRightImage.y = y;
 	}
 
 	if (flags == (cv::EVENT_FLAG_RBUTTON))
 	{
-		std::cout << "Right mouse clicked, registering point as bottom left point" << std::endl;
+		std::cout << "Right mouse clicked at : " << x << ", " << y << std::endl;
 		bottomLeftImage.x = x;
 		bottomLeftImage.y = y;
 	}
@@ -184,7 +184,7 @@ void Capture::doMouseCallback(int event, int x, int y, int flags) {
 	if (flags == (cv::EVENT_FLAG_RBUTTON + cv::EVENT_FLAG_SHIFTKEY))
 	{
 
-		std::cout << "Shift+Right clicked, registering point as bottom right point" << std::endl;
+		std::cout << "Shift+Right clicked at : " << x << ", " << y << std::endl;
 		bottomRightImage.x = x;
 		bottomRightImage.y = y;
 	}
@@ -215,4 +215,9 @@ void Capture::calcHomographyMatrix(vector<Point2f> pts_src, vector<Point2f> pts_
 	Mat h = findHomography(pts_src, pts_dest);
 	FileStorage file("homography.xml", 1, "UTF-8");
 	file <<"Homography" << h;
+
+
+	//Mat src = (Mat_<double>(3, 1) << 1146.0, 683.0, 1);
+	//Mat dst = h * src;
+	//cout << "Test X : " << dst.at<double>(0, 0) << " and Test Y : " << dst.at<double>(0, 1) << endl;
 }
