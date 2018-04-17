@@ -2,12 +2,12 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Define project name
-project(calibrate_kinect)
+project(camera_parameters)
 
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
 # via the command line or GUI
-set( OpenCV_DIR "D:/Applications/opencv31/opencv/build" )
+set( OpenCV_DIR "D:/Libraries/opencv3.1.0/build" )
 option( OpenCV_STATIC OFF )
 find_package(OpenCV REQUIRED)
 
@@ -43,7 +43,7 @@ endif()
 
 # Declare the executable target built from your sources
 set(SOURCES main.cpp app.cpp ${ADDITIONAL_INCLUDE}/app.h ${ADDITIONAL_INCLUDE}/util.h)
-add_executable(calibrate_kinect ${SOURCES} )
+add_executable(camera_parameters ${SOURCES} )
 
 # Link your application with OpenCV libraries
-target_link_libraries(calibrate_kinect ${OpenCV_LIBS} ${KinectSDK20_LIBRARIES})
+target_link_libraries(camera_parameters ${OpenCV_LIBS} ${KinectSDK20_LIBRARIES})
